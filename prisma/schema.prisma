@@ -10,3 +10,45 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  ADMIN
+  USER
+  GUEST
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(GUEST)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Book {
+  id            Int          @id @default(autoincrement())
+  title         String
+  description   String
+  author        String
+  publishedYear Int
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now())
+  Book_Genres   Book_Genre[]
+}
+
+model Genre {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  Book_Genre Book_Genre[]
+}
+
+model Book_Genre {
+  bookId  Int
+  genreId Int
+  book    Book  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, genreId])
+}
