@@ -18,13 +18,14 @@ enum Role {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
   name      String
   password  String
-  role      Role     @default(GUEST)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  role      Role       @default(GUEST)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+  WishList  WishList[]
 }
 
 model Book {
@@ -36,6 +37,7 @@ model Book {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @default(now())
   Book_Genres   Book_Genre[]
+  WishList      WishList[]
 }
 
 model Genre {
@@ -51,4 +53,15 @@ model Book_Genre {
   genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
 
   @@id([bookId, genreId])
+}
+
+model WishList {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bookId])
 }
