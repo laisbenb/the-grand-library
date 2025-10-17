@@ -14,18 +14,17 @@ datasource db {
 enum Role {
   ADMIN
   STUDENT
-  GUEST
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @unique
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
   name      String
   password  String
-  role      Role       @default(STUDENT)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @default(now())
-  WishList  WishList[]
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  //WishList  WishList[]
 }
 
 model Book {
@@ -37,7 +36,7 @@ model Book {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @default(now())
   Book_Genres   Book_Genre[]
-  WishList      WishList[]
+  //WishList      WishList[]
 }
 
 model Genre {
@@ -55,13 +54,13 @@ model Book_Genre {
   @@id([bookId, genreId])
 }
 
-model WishList {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  bookId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+// model WishList {
+//   id        Int      @id @default(autoincrement())
+//   userId    Int
+//   bookId    Int
+//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+//   createdAt DateTime @default(now())
 
-  @@unique([userId, bookId])
-}
+//   @@unique([userId, bookId])
+// }
