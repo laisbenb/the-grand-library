@@ -13,7 +13,7 @@ datasource db {
 
 enum Role {
   ADMIN
-  USER
+  STUDENT
   GUEST
 }
 
@@ -22,7 +22,7 @@ model User {
   email     String     @unique
   name      String
   password  String
-  role      Role       @default(GUEST)
+  role      Role       @default(STUDENT)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @default(now())
   WishList  WishList[]

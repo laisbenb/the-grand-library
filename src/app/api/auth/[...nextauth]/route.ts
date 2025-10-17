@@ -51,6 +51,25 @@ const handler = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    // Runs whenever a JWT is created or updated
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role; // ✅ Add role to token
+      }
+      return token;
+    },
+
+    // Runs whenever a session is checked
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role; // ✅ Make role available in session
+      }
+      return session;
+    },
+  }
 });
 
 export { handler as GET, handler as POST };

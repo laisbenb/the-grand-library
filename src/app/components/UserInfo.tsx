@@ -12,6 +12,7 @@ export default function UserInfo() {
   return (
     <div>
       <p>Welcome, {session.user?.name} 👋</p>
+      <p>Jouw rol is {session.user?.role}.</p>
     </div>
   );
 }
