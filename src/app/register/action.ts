@@ -33,5 +33,5 @@ export async function registerUser(data: FormData) {
         }
     });
 
-    redirect('/login');
+    redirect('/signin');
 }
