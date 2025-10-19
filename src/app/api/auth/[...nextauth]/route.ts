@@ -1,14 +1,13 @@
-// app/api/auth/[...nextauth]/route.ts
-import NextAuth from "next-auth";
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/client";
 import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET, // add this to your .env file
+  secret: process.env.NEXTAUTH_SECRET,
 
   providers: [
     CredentialsProvider({
@@ -52,11 +51,10 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    // Runs whenever a JWT is created or updated
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role; // ✅ Add role to token
+        token.role = user.role;
       }
       return token;
     },
@@ -65,11 +63,13 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id;
-        session.user.role = token.role; // ✅ Make role available in session
+        session.user.role = token.role;
       }
       return session;
     },
   }
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
