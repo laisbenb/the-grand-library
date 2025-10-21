@@ -9,12 +9,7 @@ export default async function NewBookPage() {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user?.role !== 'ADMIN') {
-        return (
-            <div>
-                <h1>Access Denied</h1>
-                <p>You do not have permission to create a new book.</p>
-            </div>
-        );
+        redirect('/404');
     }
 
     const authors = await prisma.author.findMany({ orderBy: { name: 'asc' } });
