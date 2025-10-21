@@ -21,7 +21,7 @@ export default async function BooksPage() {
   return (
     <div className=" flex justify-center gap-6">
       <div>
-        <h1>Books</h1>
+        <h1>The Grand Library</h1>
         <Link href="/books/new">
           Create New Book
         </Link>
@@ -36,7 +36,9 @@ export default async function BooksPage() {
               key={book.id}
               className="border rounded-xl p-4 shadow-sm hover:shadow-md transition"
             >
-              <h2 className="text-lg font-semibold">{book.title}</h2>
+              <Link href={`/books/${book.id}`}>
+                <h2 className="text-lg font-semibold">{book.title}</h2>
+              </Link>
 
               <p className="mt-2 text-sm">
                 <strong>Year:</strong> {book.publishedYear}

@@ -2,7 +2,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { parse } from "path";
 
 
 export default async function NewBookPage() {
