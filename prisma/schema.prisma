@@ -28,15 +28,21 @@ model User {
 }
 
 model Book {
-  id            Int          @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   title         String
   description   String
-  author        String
   publishedYear Int
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @default(now())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @default(now())
   Book_Genres   Book_Genre[]
+  Author_Books  Author_Book[]
   //WishList      WishList[]
+}
+
+model Author {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  Author_Book Author_Book[]
 }
 
 model Genre {
@@ -52,6 +58,15 @@ model Book_Genre {
   genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
 
   @@id([bookId, genreId])
+}
+
+model Author_Book {
+  authorId Int
+  bookId   Int
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  book     Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@id([authorId, bookId])
 }
 
 // model WishList {
