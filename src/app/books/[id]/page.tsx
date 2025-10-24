@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 interface DetailPageProps {
     params: {
