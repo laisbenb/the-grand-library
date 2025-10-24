@@ -32,6 +32,7 @@ model Book {
   title         String
   description   String
   publishedYear Int
+  coverImage    String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @default(now())
   Book_Genres   Book_Genre[]
