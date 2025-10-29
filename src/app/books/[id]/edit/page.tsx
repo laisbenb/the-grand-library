@@ -1,163 +1,196 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
+import path from "path";
+import fs from "fs/promises";
 
 interface EditBookPageProps {
   params: { id: string };
 }
 
 export default async function EditBookPage({ params }: EditBookPageProps) {
-  const session = await getServerSession(authOptions);
-  const bookId = Number(params.id);
+  const id = parseInt(params.id, 10);
+  if (isNaN(id)) notFound();
 
-  // Protect route: only ADMINs can edit
+  const session = await getServerSession(authOptions);
   if (!session || session.user?.role !== "ADMIN") {
-    redirect("/books");
+    redirect("/404");
   }
 
-  // Fetch book + authors + genres
-  const [book, authors, genres] = await Promise.all([
-    prisma.book.findUnique({
-      where: { id: bookId },
-      include: {
-        Author_Books: { include: { author: true } },
-        Book_Genres: { include: { genre: true } },
-      },
-    }),
-    prisma.author.findMany(),
-    prisma.genre.findMany(),
-  ]);
+  const book = await prisma.book.findUnique({
+    where: { id },
+    include: {
+      Author_Books: { include: { author: true } },
+      Book_Genres: { include: { genre: true } },
+    },
+  });
 
-  if (!book) return notFound();
+  if (!book) notFound();
 
-  // Existing selected ids
-  const selectedAuthorIds = book.Author_Books.map((a) => a.authorId);
-  const selectedGenreIds = book.Book_Genres.map((g) => g.genreId);
+  const authors = await prisma.author.findMany({ orderBy: { name: "asc" } });
+  const genres = await prisma.genre.findMany({ orderBy: { name: "asc" } });
 
-  // Server action to update the book
+  const currentAuthorId = book.Author_Books[0]?.authorId || "";
+  const currentGenreId = book.Book_Genres[0]?.genreId || "";
+
   async function updateBook(formData: FormData) {
     "use server";
 
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const publishedYear = Number(formData.get("publishedYear"));
-    const authorIds = formData.getAll("authorIds").map((id) => Number(id));
-    const genreIds = formData.getAll("genreIds").map((id) => Number(id));
+    const title = formData.get("title")?.toString() ?? "";
+    const description = formData.get("description")?.toString() ?? "";
+    const publishedYearStr = formData.get("publishedYear")?.toString() ?? "";
+    const authorIdStr = formData.get("authorId")?.toString() ?? "";
+    const genreIdStr = formData.get("genreId")?.toString() ?? "";
 
-    // Update book
+    const file = formData.get("coverImage") as File | null;
+
+    if (!title || !description || !publishedYearStr || !authorIdStr || !genreIdStr) {
+      throw new Error("All fields are required");
+    }
+
+    const publishedYear = parseInt(publishedYearStr, 10);
+    const authorId = parseInt(authorIdStr, 10);
+    const genreId = parseInt(genreIdStr, 10);
+
+    let coverImagePath = book.coverImage;
+
+    // Handle new file upload if provided
+    if (file && file.size > 0) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const fileExt = path.extname(file.name);
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExt}`;
+      const uploadDir = path.join(process.cwd(), "public/uploads");
+
+      await fs.mkdir(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, fileName);
+      await fs.writeFile(filePath, buffer);
+
+      // Remove old cover image if it exists
+      if (book.coverImage) {
+        const oldPath = path.join(process.cwd(), "public", book.coverImage);
+        try {
+          await fs.unlink(oldPath);
+        } catch {
+          console.warn("Old image not found, skipping delete.");
+        }
+      }
+
+      coverImagePath = `/uploads/${fileName}`;
+    }
+
+    // Update the book
     await prisma.book.update({
-      where: { id: bookId },
+      where: { id: book.id },
       data: {
         title,
         description,
         publishedYear,
-        updatedAt: new Date(),
-
-        // Update relations: remove old and connect new
+        coverImage: coverImagePath,
         Author_Books: {
-          deleteMany: {},
-          create: authorIds.map((authorId) => ({ authorId })),
+          deleteMany: {}, // remove existing relation
+          create: { authorId },
         },
         Book_Genres: {
           deleteMany: {},
-          create: genreIds.map((genreId) => ({ genreId })),
+          create: { genreId },
         },
       },
     });
 
-    redirect(`/books/${bookId}`);
+    redirect(`/books/${book.id}`);
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Edit Book</h1>
+    <div className="max-w-3xl mx-auto p-8 space-y-8">
+      <h1 className="text-3xl font-bold mb-6">Edit Book: {book.title}</h1>
 
       <form action={updateBook} className="space-y-4">
-        {/* Title */}
         <div>
           <label className="block font-medium mb-1">Title</label>
           <input
-            type="text"
             name="title"
+            type="text"
             defaultValue={book.title}
-            className="w-full border p-2 rounded"
             required
+            className="w-full border border-gray-300 rounded-md p-2"
           />
         </div>
 
-        {/* Description */}
         <div>
           <label className="block font-medium mb-1">Description</label>
           <textarea
             name="description"
+            rows={3}
             defaultValue={book.description}
-            className="w-full border p-2 rounded h-24"
+            required
+            className="w-full border border-gray-300 rounded-md p-2"
           />
         </div>
 
-        {/* Published Year */}
         <div>
           <label className="block font-medium mb-1">Published Year</label>
           <input
-            type="number"
             name="publishedYear"
+            type="number"
             defaultValue={book.publishedYear}
-            className="w-full border p-2 rounded"
             required
+            className="w-full border border-gray-300 rounded-md p-2"
           />
         </div>
 
-        {/* Authors */}
         <div>
-          <label className="block font-medium mb-1">Authors</label>
+          <label className="block font-medium mb-1">Author</label>
           <select
-            name="authorIds"
-            multiple
-            className="w-full border p-2 rounded h-32"
+            name="authorId"
+            defaultValue={currentAuthorId}
+            required
+            className="w-full border border-gray-300 rounded-md p-2"
           >
+            <option value="">Select author</option>
             {authors.map((author) => (
-              <option
-                key={author.id}
-                value={author.id}
-                selected={selectedAuthorIds.includes(author.id)}
-              >
+              <option key={author.id} value={author.id}>
                 {author.name}
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-500">
-            Hold Ctrl (or Cmd) to select multiple authors
-          </p>
         </div>
 
-        {/* Genres */}
         <div>
-          <label className="block font-medium mb-1">Genres</label>
+          <label className="block font-medium mb-1">Genre</label>
           <select
-            name="genreIds"
-            multiple
-            className="w-full border p-2 rounded h-32"
+            name="genreId"
+            defaultValue={currentGenreId}
+            required
+            className="w-full border border-gray-300 rounded-md p-2"
           >
+            <option value="">Select genre</option>
             {genres.map((genre) => (
-              <option
-                key={genre.id}
-                value={genre.id}
-                selected={selectedGenreIds.includes(genre.id)}
-              >
+              <option key={genre.id} value={genre.id}>
                 {genre.name}
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-500">
-            Hold Ctrl (or Cmd) to select multiple genres
-          </p>
         </div>
 
-        {/* Submit */}
+        <div>
+          <label className="block font-medium mb-1">Replace Cover Image (optional)</label>
+          <input
+            type="file"
+            name="coverImage"
+            accept="image/png, image/jpeg"
+            className="w-full"
+          />
+          {book.coverImage && (
+            <p className="text-sm text-gray-500 mt-1">
+              Current image: <code>{book.coverImage}</code>
+            </p>
+          )}
+        </div>
+
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
         >
           Save Changes
         </button>
