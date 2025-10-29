@@ -2,6 +2,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import path from "path";
+import fs from "fs/promises";
 
 
 export default async function NewBookPage() {
@@ -43,6 +45,21 @@ export default async function NewBookPage() {
         const authorIdStr = data.get('authorId')?.toString();
         const genreIdStr = data.get('genreId')?.toString();
 
+        const file = data.get('coverImage') as File | null;
+        let coverImagePath: string | null = null;
+
+        if (file && file.size > 0) {
+          const buffer = Buffer.from(await file.arrayBuffer());
+          const fileExt = path.extname(file.name);
+          const fileName = `${Date.now()}-${Math.random()
+            .toString(36)
+            .substring(2)}${fileExt}`;
+          const uploadDir = path.join(process.cwd(), "public/uploads");
+          const filePath = path.join(uploadDir, fileName);
+          await fs.writeFile(filePath, buffer);
+          coverImagePath = `/uploads/${fileName}`;
+        }
+
         if (!title || !description || !publishedYearStr || !authorIdStr || !genreIdStr) {
             throw new Error('All fields are required');
         }
@@ -58,6 +75,7 @@ export default async function NewBookPage() {
                 title,
                 description,
                 publishedYear,
+                coverImage: coverImagePath,
                 Author_Books: { create : { authorId } },
                 Book_Genres: { create : { genreId } }
             }
@@ -142,7 +160,16 @@ export default async function NewBookPage() {
             />
           </div>
 
-          {/* Dropdown for Authors */}
+        <div>
+          <label className="block font-medium mb-1">Cover Image (JPG or PNG)</label>
+          <input
+            type="file"
+            name="image"
+            accept="image/png, image/jpeg"
+            className="w-full"
+          />
+        </div>
+
           <div>
             <label className="block font-medium mb-1">Author</label>
             <select
@@ -159,7 +186,6 @@ export default async function NewBookPage() {
             </select>
           </div>
 
-          {/* Dropdown for Genres */}
           <div>
             <label className="block font-medium mb-1">Genre</label>
             <select
