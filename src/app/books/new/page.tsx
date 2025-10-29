@@ -164,7 +164,7 @@ export default async function NewBookPage() {
           <label className="block font-medium mb-1">Cover Image (JPG or PNG)</label>
           <input
             type="file"
-            name="image"
+            name="coverImage"
             accept="image/png, image/jpeg"
             className="w-full"
           />

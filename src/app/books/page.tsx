@@ -1,5 +1,6 @@
 import prisma from "@/lib/client";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function BooksPage() {
   const books = await prisma.book.findMany({
@@ -36,6 +37,16 @@ export default async function BooksPage() {
               key={book.id}
               className="border rounded-xl p-4 shadow-sm hover:shadow-md transition"
             >
+      {book.coverImage && (
+      <div className="relative w-32 h-48 mb-2">
+        <Image
+          src={book.coverImage}
+          alt={book.title}
+          fill
+          className="object-cover rounded"
+        />
+      </div>
+    )}
               <Link href={`/books/${book.id}`}>
                 <h2 className="text-lg font-semibold">{book.title}</h2>
               </Link>
