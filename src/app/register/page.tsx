@@ -1,4 +1,3 @@
-// app/register/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -24,25 +23,54 @@ export default function RegisterPage() {
   }
 
   return (
-    <div>
-      <h1>Register</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md space-y-6">
+        <h1 className="text-3xl font-bold text-center">Register</h1>
 
-      <form action={registerUser} onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Email:</label>
-          <input type="email" id="email" name="email" required />
-        </div>
-        <div>
-          <label htmlFor="name">Name:</label>
-          <input type="text" id="name" name="name" required />
-        </div>
-        <div>
-          <label htmlFor="password">Password:</label>
-          <input type="password" id="password" name="password" required />
-        </div>
-        <button type="submit">Register</button>
-      </form>
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
+        <form action={registerUser} onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex flex-col">
+            <label htmlFor="email" className="mb-1 font-medium">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="name" className="mb-1 font-medium">Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="password" className="mb-1 font-medium">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-orange-400 text-white py-2 rounded-lg font-medium hover:bg-orange-500 transition"
+          >
+            Register
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,94 +1,123 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import Image from "next/image";
 
 interface DetailPageProps {
-    params: {
-        id: string;
-    };
+  params: {
+    id: string;
+  };
 }
 
-export default async function detailPage({ params }: DetailPageProps) {
+export default async function BookDetailPage({ params }: DetailPageProps) {
+  const session = await getServerSession(authOptions);
+  const bookId = Number(params.id);
 
-    const session = await getServerSession(authOptions);
-    const bookId = Number(params.id);
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    include: {
+      Author_Books: { include: { author: true } },
+      Book_Genres: { include: { genre: true } },
+    },
+  });
 
-    const book = await prisma.book.findUnique({
-        where: { id: bookId },
-        include: {
-        Author_Books: {
-            include: { author: true },
-          },
-          Book_Genres: {
-            include: { genre: true },
-          },
-        },
-    });
+  if (!book) return notFound();
 
-    if (!book) return notFound();
+  const isAdmin = session?.user?.role === "ADMIN";
 
-    const isAdmin = session?.user?.role === 'ADMIN';
-  
-    return (
-        <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">{book.title}</h1>
+  return (
+    <div className="max-w-5xl mx-auto p-8">
+      {/* Back Button */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">{book.title}</h1>
         <Link
           href="/books"
-          className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+          className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm transition"
         >
           ← Back to Books
         </Link>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-gray-700">{book.description}</p>
-        <p><strong>Published Year:</strong> {book.publishedYear}</p>
-
-        <p>
-          <strong>Authors:</strong>{" "}
-          {book.Author_Books.map((ab) => ab.author.name).join(", ") || "Unknown"}
-        </p>
-
-        <p>
-          <strong>Genres:</strong>{" "}
-          {book.Book_Genres.map((bg) => bg.genre.name).join(", ") ||
-            "Uncategorized"}
-        </p>
-
-        <p className="text-xs text-gray-400">
-          Created at: {new Date(book.createdAt).toLocaleDateString()}
-        </p>
-      </div>
-
-      {isAdmin && (
-        <div className="flex gap-3 mt-6">
-          <Link
-            href={`/books/${book.id}/edit`}
-            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-          >
-            Edit
-          </Link>
-
-          <form
-            action={async () => {
-              "use server";
-              await prisma.book.delete({ where: { id: book.id } });
-              redirect("/books");
-            }}
-          >
-            <button
-              type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </form>
+      {/* Book Layout */}
+      <div className="flex flex-col md:flex-row gap-10 bg-white p-6 rounded-2xl shadow-lg">
+        {/* Cover Image */}
+        <div className="flex-shrink-0">
+          {book.coverImage ? (
+            <Image
+              src={book.coverImage}
+              alt={`${book.title} cover`}
+              width={350}
+              height={500}
+              className="rounded-lg shadow-md object-cover w-[300px] h-[450px]"
+            />
+          ) : (
+            <div className="w-[300px] h-[450px] flex items-center justify-center bg-gray-100 text-gray-500 rounded-lg border border-gray-200">
+              No Cover Image
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Book Info */}
+        <div className="flex flex-col justify-between flex-1">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-3">
+              {book.title}
+            </h2>
+            <p className="text-gray-700 mb-6 leading-relaxed">
+              {book.description}
+            </p>
+
+            <div className="space-y-2 text-gray-700">
+              <p>
+                <strong>📅 Published Year:</strong> {book.publishedYear}
+              </p>
+              <p>
+                <strong>✍️ Author:</strong>{" "}
+                {book.Author_Books.map((ab) => ab.author.name).join(", ") ||
+                  "Unknown"}
+              </p>
+              <p>
+                <strong>🏷️ Genre:</strong>{" "}
+                {book.Book_Genres.map((bg) => bg.genre.name).join(", ") ||
+                  "Uncategorized"}
+              </p>
+            </div>
+
+            <p className="text-xs text-gray-400 mt-4">
+              Added on {new Date(book.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+
+          {/* Admin Controls */}
+          {isAdmin && (
+            <div className="flex gap-4 mt-8">
+              <Link
+                href={`/books/${book.id}/edit`}
+                className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+              >
+                ✏️ Edit
+              </Link>
+
+              <form
+                action={async () => {
+                  "use server";
+                  await prisma.book.delete({ where: { id: book.id } });
+                  redirect("/books");
+                }}
+              >
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  🗑️ Delete
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-    );
+  );
 }
