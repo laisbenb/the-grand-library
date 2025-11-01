@@ -4,11 +4,39 @@ import prisma from "@/lib/client";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { revalidatePath } from "next/cache";
 
 interface DetailPageProps {
   params: {
     id: string;
   };
+}
+
+// 🔹 Server action to toggle wishlist
+async function toggleWishlist(bookId: number) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return;
+
+  // ✅ Convert string → number
+  const userId = Number(session.user.id);
+  if (isNaN(userId)) throw new Error("Invalid user ID");
+
+  const existing = await prisma.wishList.findUnique({
+    where: { userId_bookId: { userId, bookId } },
+  });
+
+  if (existing) {
+    await prisma.wishList.delete({
+      where: { id: existing.id },
+    });
+  } else {
+    await prisma.wishList.create({
+      data: { userId, bookId },
+    });
+  }
+
+  revalidatePath(`/books/${bookId}`);
 }
 
 export default async function BookDetailPage({ params }: DetailPageProps) {
@@ -20,12 +48,15 @@ export default async function BookDetailPage({ params }: DetailPageProps) {
     include: {
       Author_Books: { include: { author: true } },
       Book_Genres: { include: { genre: true } },
+      WishList: true, // ✅ So we can check if the current user has this book wishlisted
     },
   });
 
   if (!book) return notFound();
 
   const isAdmin = session?.user?.role === "ADMIN";
+  const userId = session?.user?.id;
+  const isWishlisted = book.WishList?.some((w) => w.userId === userId);
 
   return (
     <div className="max-w-5xl mx-auto p-8">
@@ -90,32 +121,51 @@ export default async function BookDetailPage({ params }: DetailPageProps) {
             </p>
           </div>
 
-          {/* Admin Controls */}
-          {isAdmin && (
-            <div className="flex gap-4 mt-8">
-              <Link
-                href={`/books/${book.id}/edit`}
-                className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-              >
-                ✏️ Edit
-              </Link>
-
-              <form
-                action={async () => {
-                  "use server";
-                  await prisma.book.delete({ where: { id: book.id } });
-                  redirect("/books");
-                }}
-              >
+          {/* Buttons */}
+          <div className="flex flex-wrap gap-4 mt-8">
+            {/* 🔸 Wishlist Button */}
+            {session?.user && (
+              <form action={toggleWishlist.bind(null, book.id)}>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  className={`px-4 py-2 rounded transition ${
+                    isWishlisted
+                      ? "bg-red-500 text-white hover:bg-red-600"
+                      : "bg-orange-500 text-white hover:bg-orange-600"
+                  }`}
                 >
-                  🗑️ Delete
+                  {isWishlisted ? "💔 Remove from Wishlist" : "❤️ Add to Wishlist"}
                 </button>
               </form>
-            </div>
-          )}
+            )}
+
+            {/* Admin Controls */}
+            {isAdmin && (
+              <>
+                <Link
+                  href={`/books/${book.id}/edit`}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                >
+                  ✏️ Edit
+                </Link>
+
+                <form
+                  action={async () => {
+                    "use server";
+                    await prisma.book.delete({ where: { id: book.id } });
+                    redirect("/books");
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    🗑️ Delete
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
