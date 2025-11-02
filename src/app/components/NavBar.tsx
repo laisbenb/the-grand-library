@@ -12,7 +12,7 @@ export default function NavBar() {
         </div>
         <div className="flex justify-center gap-4">
             <Link href="/books">Books</Link>
-            <Link href="/wishlist">Winkelmandje</Link>
+            <Link href="/wishlist">WishList</Link>
             {session ? (
                 <Link href="/signout">Logout</Link>
             ) : (

@@ -3,6 +3,7 @@ import { authOptions } from "../api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
 import Link from "next/link";
 import Image from "next/image";
+import { removeFromWishlist } from "./action";
 
 export default async function WishListPage() {
   const session = await getServerSession(authOptions);
@@ -55,6 +56,19 @@ export default async function WishListPage() {
               <p className="text-sm mt-1 text-gray-600">
                 {entry.book.Author_Books.map((ab) => ab.author.name).join(", ")}
               </p>
+              <form
+                action={async () => {
+                  "use server";
+                  await removeFromWishlist(entry.book.id);
+                }}
+              >
+                <button
+                  type="submit"
+                  className="mt-4 w-full bg-orange-500 text-white py-2 rounded-md hover:bg-orange-600 transition"
+                >
+                  Remove from Wishlist
+                </button>
+              </form>
             </div>
           ))}
         </div>
