@@ -1,6 +1,6 @@
 import prisma from "@/lib/client";
 import Link from "next/link";
-import Image from "next/image";
+import BookCard from "../components/BookCard";
 
 export default async function BooksPage() {
   const books = await prisma.book.findMany({
@@ -37,39 +37,16 @@ export default async function BooksPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {books.map((book) => (
-                <div
-                  key={book.id}
-                  className="border rounded-2xl p-4 shadow-sm hover:shadow-md transition"
-                >
-                  {book.coverImage && (
-                    <div className="relative w-full h-64 mb-4 rounded overflow-hidden">
-                      <Image
-                        src={book.coverImage}
-                        alt={book.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <Link href={`/books/${book.id}`}>
-                    <h2 className="text-lg font-semibold hover:underline">{book.title}</h2>
-                  </Link>
-                  <p className="mt-1 text-sm">
-                    <strong>Author:</strong>{" "}
-                    {book.Author_Books.map((ab) => ab.author.name).join(", ") || "Unknown"}
-                  </p>
-                  <p className="mt-1 text-sm">
-                    <strong>Year:</strong> {book.publishedYear}
-                  </p>
-                  <p className="mt-1 text-sm">
-                    <strong>Genres:</strong>{" "}
-                    {book.Book_Genres.map((bg) => bg.genre.name).join(", ") ||
-                      "Uncategorized"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Added on {new Date(book.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+                <BookCard
+                key={book.id}
+                id={book.id}
+                title={book.title}
+                coverImage={book.coverImage}
+                authors={book.Author_Books.map((a) => a.author.name)}
+                genres={book.Book_Genres.map((g) => g.genre.name)}
+                publishedYear={book.publishedYear}
+                createdAt={book.createdAt}
+              /> 
               ))}
             </div>
           )}
