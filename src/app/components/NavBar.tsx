@@ -1,24 +1,104 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react"; // you can install with `npm install lucide-react`
 
 export default function NavBar() {
   const { data: session } = useSession();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => setDropdownOpen((prev) => !prev);
+  const closeDropdown = () => setDropdownOpen(false);
+
+  const user = session?.user;
+  const isAdmin = user?.role === "ADMIN";
+
   return (
-    <nav className="flex justify-between p-4">
-        <div>
-            <Link href="/">Home</Link>
-        </div>
-        <div className="flex justify-center gap-4">
-            <Link href="/books">Books</Link>
-            <Link href="/wishlist">WishList</Link>
-            {session ? (
-                <Link href="/signout">Logout</Link>
-            ) : (
-                <Link href="/signin">Login</Link>
+    <nav className="flex justify-between items-center px-6 py-4 shadow-md bg-white/90 backdrop-blur-md">
+      {/* Left side */}
+      <div className="flex items-center gap-6">
+        <Link
+          href="/"
+          className="text-xl font-bold text-orange-600 hover:text-orange-700 transition"
+        >
+          📚 The Grand Library
+        </Link>
+
+        <Link
+          href="/books"
+          className="text-gray-700 hover:text-orange-600 font-medium transition"
+        >
+          Books
+        </Link>
+
+        {/* Only visible for admins */}
+        {isAdmin && (
+          <Link
+            href="/users"
+            className="text-gray-700 hover:text-orange-600 font-medium transition"
+          >
+            Users
+          </Link>
+        )}
+      </div>
+
+      {/* Right side */}
+      <div className="relative">
+        {!session ? (
+          <Link
+            href="/signin"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition"
+          >
+            Login
+          </Link>
+        ) : (
+          <div className="relative">
+            <button
+              onClick={toggleDropdown}
+              className="flex items-center gap-2 text-gray-800 font-medium hover:text-orange-600 transition"
+            >
+              {user?.name || "Profile"}
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${
+                  dropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {dropdownOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50"
+                onMouseLeave={closeDropdown}
+              >
+                <Link
+                  href={`/users/${user?.id}`}
+                  className="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                  onClick={closeDropdown}
+                >
+                  My Profile
+                </Link>
+
+                <Link
+                  href="/wishlist"
+                  className="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                  onClick={closeDropdown}
+                >
+                  My Wishlist
+                </Link>
+
+                <button
+                  onClick={() => signOut()}
+                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                >
+                  Logout
+                </button>
+              </div>
             )}
-        </div>
+          </div>
+        )}
+      </div>
     </nav>
   );
-  }
+}

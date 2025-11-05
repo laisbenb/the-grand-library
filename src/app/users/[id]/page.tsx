@@ -14,15 +14,17 @@ interface UserDetailPageProps {
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
   const session = await getServerSession(authOptions);
 
-  // 🔒 Only admins can access
-  if (!session?.user || session.user.role !== "ADMIN") {
-    redirect("/");
-  }
-
   const userId = Number(params.id);
   if (isNaN(userId)) return notFound();
 
-  // ✅ Fetch user data (you could include wishlist or books later)
+  const isAdmin = session?.user?.role === "ADMIN";
+  const isSelf = Number(session.user.id) === userId;
+
+
+  if (!isAdmin && !isSelf) {
+    redirect("/");
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
@@ -44,54 +46,69 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
   const wishlistedBooks = user.WishList.map((w) => w.book);
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
+    <div className="max-w-6xl mx-auto p-8 space-y-10">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          User Details: {user.name}
+      <div className="flex justify-between items-center">
+        <h1 className="text-4xl font-bold text-gray-900">
+          User Details —{" "}
+          <span className="text-orange-600">{user.name}</span>
         </h1>
         <Link
           href="/users"
-          className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm transition"
+          className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm font-medium transition"
         >
           ← Back to Users
         </Link>
       </div>
 
-      {/* Card */}
-      <div className="bg-white rounded-2xl shadow-md p-6 space-y-4">
-        <div className="space-y-2">
+      {/* User Info Card */}
+      <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          👤 Account Information
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
           <p>
-            <strong className="text-gray-700">📧 Email:</strong> {user.email}
+            <strong className="text-gray-800">📧 Email:</strong> {user.email}
           </p>
           <p>
-            <strong className="text-gray-700">👤 Role:</strong>{" "}
+            <strong className="text-gray-800">🗓️ Created:</strong>{" "}
+            {new Date(user.createdAt).toLocaleDateString()}
+          </p>
+          <p>
+            <strong className="text-gray-800">🕒 Updated:</strong>{" "}
+            {new Date(user.updatedAt).toLocaleDateString()}
+          </p>
+          <p>
+            <strong className="text-gray-800">👑 Role:</strong>{" "}
             <span
-              className={`font-medium ${
-                user.role === "ADMIN" ? "text-orange-600" : "text-gray-600"
+              className={`font-semibold px-2 py-1 rounded-md ${
+                user.role === "ADMIN"
+                  ? "bg-orange-100 text-orange-700"
+                  : "bg-gray-100 text-gray-700"
               }`}
             >
               {user.role}
             </span>
           </p>
-          <p>
-            <strong className="text-gray-700">🗓️ Created:</strong>{" "}
-            {new Date(user.createdAt).toLocaleDateString()}
-          </p>
-          <p>
-            <strong className="text-gray-700">🕒 Updated:</strong>{" "}
-            {new Date(user.updatedAt).toLocaleDateString()}
-          </p>
         </div>
       </div>
-         {/* Wishlist Section */}
-      <div className="bg-white shadow-md p-6 rounded-2xl">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-          Wishlist ({wishlistedBooks.length})
-        </h2>
+
+      {/* Wishlist Section */}
+      <div className="bg-white shadow-md p-6 rounded-2xl border border-gray-100">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold text-gray-800">
+            Wishlist
+          </h2>
+          <span className="bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-full">
+            {wishlistedBooks.length}{" "}
+            {wishlistedBooks.length === 1 ? "Book" : "Books"}
+          </span>
+        </div>
 
         {wishlistedBooks.length === 0 ? (
-          <p className="text-gray-500">This user has no wishlisted books.</p>
+          <p className="text-gray-500 italic">
+            This user hasn’t added any books to their wishlist yet.
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {wishlistedBooks.map((book) => (
