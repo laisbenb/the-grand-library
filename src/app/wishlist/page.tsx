@@ -1,8 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
-import Link from "next/link";
-import Image from "next/image";
 import { removeFromWishlist } from "./action";
 import BookCard from "../components/BookCard";
 
