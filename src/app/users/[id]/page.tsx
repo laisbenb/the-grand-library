@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import BookCard from "../../components/BookCard";
 
 interface UserDetailPageProps {
   params: {
@@ -27,13 +28,20 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     include: {
       WishList: {
         include: {
-          book: true,
+          book: {
+            include: {
+              Author_Books: { include: { author: true } },
+              Book_Genres: { include: { genre: true } },
+            },
+          },
         },
       },
     },
   });
 
   if (!user) return notFound();
+
+  const wishlistedBooks = user.WishList.map((w) => w.book);
 
   return (
     <div className="max-w-4xl mx-auto p-8">
@@ -75,31 +83,29 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             {new Date(user.updatedAt).toLocaleDateString()}
           </p>
         </div>
+      </div>
+         {/* Wishlist Section */}
+      <div className="bg-white shadow-md p-6 rounded-2xl">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          Wishlist ({wishlistedBooks.length})
+        </h2>
 
-        {/* Wishlist section (optional for now) */}
-        {user.WishList.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">
-              Wishlist
-            </h2>
-            <ul className="space-y-2">
-              {user.WishList.map((wl) => (
-                <li
-                  key={wl.id}
-                  className="flex justify-between items-center border border-gray-100 rounded-lg p-3 hover:bg-gray-50 transition"
-                >
-                  <Link
-                    href={`/books/${wl.book.id}`}
-                    className="text-orange-600 font-medium hover:underline"
-                  >
-                    {wl.book.title}
-                  </Link>
-                  <span className="text-sm text-gray-500">
-                    Added {new Date(wl.createdAt).toLocaleDateString()}
-                  </span>
-                </li>
-              ))}
-            </ul>
+        {wishlistedBooks.length === 0 ? (
+          <p className="text-gray-500">This user has no wishlisted books.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {wishlistedBooks.map((book) => (
+              <BookCard
+                key={book.id}
+                id={book.id}
+                title={book.title}
+                coverImage={book.coverImage}
+                authors={book.Author_Books.map((ab) => ab.author.name)}
+                genres={book.Book_Genres.map((bg) => bg.genre.name)}
+                publishedYear={book.publishedYear}
+                createdAt={book.createdAt}
+              />
+            ))}
           </div>
         )}
       </div>
