@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
-import { ChevronDown } from "lucide-react"; // you can install with `npm install lucide-react`
+import { ChevronDown } from "lucide-react";
 
 export default function NavBar() {
   const { data: session } = useSession();
@@ -17,7 +17,6 @@ export default function NavBar() {
 
   return (
     <nav className="flex justify-between items-center px-6 py-4 shadow-md bg-white/90 backdrop-blur-md">
-      {/* Left side */}
       <div className="flex items-center gap-6">
         <Link
           href="/"
@@ -33,7 +32,6 @@ export default function NavBar() {
           Books
         </Link>
 
-        {/* Only visible for admins */}
         {isAdmin && (
           <Link
             href="/users"
@@ -44,7 +42,6 @@ export default function NavBar() {
         )}
       </div>
 
-      {/* Right side */}
       <div className="relative">
         {!session ? (
           <Link
@@ -88,12 +85,13 @@ export default function NavBar() {
                   My Wishlist
                 </Link>
 
-                <button
-                  onClick={() => signOut()}
-                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                <Link
+                  href="/signout"
+                  className="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                  onClick={closeDropdown}
                 >
                   Logout
-                </button>
+                </Link>
               </div>
             )}
           </div>
