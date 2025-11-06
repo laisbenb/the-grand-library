@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { revalidatePath } from "next/cache";
+import { requestBorrow } from "../action";
 
 interface DetailPageProps {
   params: {
@@ -12,7 +13,6 @@ interface DetailPageProps {
   };
 }
 
-// 🔹 Server action to toggle wishlist
 async function toggleWishlist(bookId: number) {
   "use server";
   const session = await getServerSession(authOptions);
@@ -48,14 +48,14 @@ export default async function BookDetailPage({ params }: DetailPageProps) {
     include: {
       Author_Books: { include: { author: true } },
       Book_Genres: { include: { genre: true } },
-      WishList: true, // ✅ So we can check if the current user has this book wishlisted
+      WishList: true,
     },
   });
 
   if (!book) return notFound();
 
   const isAdmin = session?.user?.role === "ADMIN";
-  const userId = session?.user?.id;
+  const userId = Number(session?.user?.id);
   const isWishlisted = book.WishList?.some((w) => w.userId === userId);
 
   return (
@@ -138,7 +138,22 @@ export default async function BookDetailPage({ params }: DetailPageProps) {
                 </button>
               </form>
             )}
-
+            {/* 🔸 Borrow Request Button */}
+            {session?.user && (
+              <form
+                action={async () => {
+                  "use server";
+                  await requestBorrow(book.id);
+                }}
+              >
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition"
+                >
+                  📚 Request to Borrow
+                </button>
+              </form>
+            )}
             {/* Admin Controls */}
             {isAdmin && (
               <>
