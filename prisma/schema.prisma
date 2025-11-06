@@ -25,6 +25,7 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @default(now())
   WishList  WishList[]
+  Loans     Loan[]
 }
 
 model Book {
@@ -38,6 +39,7 @@ model Book {
   Book_Genres   Book_Genre[]
   Author_Books  Author_Book[]
   WishList      WishList[]
+  Loans         Loan[]
 }
 
 model Author {
@@ -79,4 +81,24 @@ model WishList {
   createdAt DateTime @default(now())
 
   @@unique([userId, bookId])
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+model Loan {
+  id          Int        @id @default(autoincrement())
+  userId      Int
+  bookId      Int
+  status      LoanStatus @default(PENDING)
+  requestedAt DateTime   @default(now())
+  approvedAt  DateTime?
+  returnedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 }
