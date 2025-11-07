@@ -38,12 +38,24 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           },
         },
       },
+      Loans: {
+        include: {
+          book: {
+            include: {
+              Author_Books: { include: { author: true } },
+              Book_Genres: { include: { genre: true } },
+            },
+          },
+        },
+        orderBy: { requestedAt: "desc" },
+      },
     },
   });
 
   if (!user) return notFound();
 
   const wishlistedBooks = user.WishList.map((w) => w.book);
+  const borrowedBooks = user.Loans;
 
   return (
     <div className="max-w-6xl mx-auto p-8 space-y-10">
@@ -126,6 +138,65 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           </div>
         )}
       </div>
+      {/* Borrowed Books Section */}
+      <div className="bg-white shadow-md p-6 rounded-2xl border border-gray-100">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold text-gray-800">Borrowed Books</h2>
+          <span className="bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-full">
+            {borrowedBooks.length}{" "}
+            {borrowedBooks.length === 1 ? "Request" : "Requests"}
+          </span>
+        </div>
+
+        {borrowedBooks.length === 0 ? (
+          <p className="text-gray-500 italic">
+            This user hasn’t requested or borrowed any books yet.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {borrowedBooks.map((loan) => (
+              <div
+                key={loan.id}
+                className="p-4 rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center"
+              >
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800">
+                    {loan.book.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Requested on {new Date(loan.requestedAt).toLocaleDateString()}
+                  </p>
+                  <p
+                    className={`font-semibold mt-1 ${
+                      loan.status === "PENDING"
+                        ? "text-orange-500"
+                              : loan.status === "APPROVED"
+                              ? "text-green-600"
+                              : loan.status === "REJECTED"
+                              ? "text-red-500"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          Status: {loan.status}
+                  </p>
+                </div>
+                      
+                {/* Reuse your BookCard component */}
+                <BookCard
+                  id={loan.book.id}
+                  title={loan.book.title}
+                  coverImage={loan.book.coverImage}
+                  authors={loan.book.Author_Books.map((ab) => ab.author.name)}
+                  genres={loan.book.Book_Genres.map((bg) => bg.genre.name)}
+                  publishedYear={loan.book.publishedYear}
+                  createdAt={loan.book.createdAt}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
