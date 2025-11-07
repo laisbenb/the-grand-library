@@ -4,6 +4,7 @@ import prisma from "@/lib/client";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import BookCard from "../../components/BookCard";
+import { returnBook } from "../action";
 
 interface UserDetailPageProps {
   params: {
@@ -180,6 +181,17 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                           Status: {loan.status}
                   </p>
                 </div>
+                {isSelf && loan.status === "APPROVED" && (
+                  <form action={returnBook.bind(null, loan.id)} className="mt-2">
+                    <button
+                      type="submit"
+                      className="px-3 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition"
+                    >
+                      🔄 Mark as Returned
+                    </button>
+                  </form>
+                )}
+
                       
                 {/* Reuse your BookCard component */}
                 <BookCard
