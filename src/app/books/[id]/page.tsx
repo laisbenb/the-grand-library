@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { revalidatePath } from "next/cache";
-import { requestBorrow } from "../action";
+import BorrowButton from "@/app/components/BorrowButton";
 
 interface DetailPageProps {
   params: {
@@ -49,6 +49,7 @@ export default async function BookDetailPage({ params }: DetailPageProps) {
       Author_Books: { include: { author: true } },
       Book_Genres: { include: { genre: true } },
       WishList: true,
+      Loans: { include: { user: true } },
     },
   });
 
@@ -140,19 +141,7 @@ export default async function BookDetailPage({ params }: DetailPageProps) {
             )}
             {/* 🔸 Borrow Request Button */}
             {session?.user && (
-              <form
-                action={async () => {
-                  "use server";
-                  await requestBorrow(book.id);
-                }}
-              >
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition"
-                >
-                  📚 Request to Borrow
-                </button>
-              </form>
+              <BorrowButton bookId={book.id} isBorrowed={book.status === "PENDING"} />
             )}
             {/* Admin Controls */}
             {isAdmin && (
