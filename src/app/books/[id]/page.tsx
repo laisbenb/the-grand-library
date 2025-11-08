@@ -4,39 +4,13 @@ import prisma from "@/lib/client";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { revalidatePath } from "next/cache";
 import BorrowButton from "@/app/components/BorrowButton";
+import { toggleWishlist } from "@/app/actions/ToggleWishlist";
 
 interface DetailPageProps {
   params: {
     id: string;
   };
-}
-
-async function toggleWishlist(bookId: number) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return;
-
-  // ✅ Convert string → number
-  const userId = Number(session.user.id);
-  if (isNaN(userId)) throw new Error("Invalid user ID");
-
-  const existing = await prisma.wishList.findUnique({
-    where: { userId_bookId: { userId, bookId } },
-  });
-
-  if (existing) {
-    await prisma.wishList.delete({
-      where: { id: existing.id },
-    });
-  } else {
-    await prisma.wishList.create({
-      data: { userId, bookId },
-    });
-  }
-
-  revalidatePath(`/books/${bookId}`);
 }
 
 export default async function BookDetailPage({ params }: DetailPageProps) {

@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
 import { redirect } from "next/navigation";
-import { approveBorrow, rejectBorrow } from "./action";
+import { approveBorrow, rejectBorrow } from "@/app/actions/Borrow";
 
 export default async function AdminBorrowRequestsPage() {
   const session = await getServerSession(authOptions);

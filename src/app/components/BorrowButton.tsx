@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { requestBorrow } from "../books/action";
+import { requestBorrow } from "@/app/actions/Borrow";
 
 export default function BorrowButton({
   bookId,

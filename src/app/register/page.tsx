@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { registerUser } from './action';
+import { registerUser } from '@/app/actions/Register';
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);

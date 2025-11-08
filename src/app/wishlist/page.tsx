@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import prisma from "@/lib/client";
-import { removeFromWishlist } from "./action";
+import { removeFromWishlist } from "@/app/actions/ToggleWishlist";
 import BookCard from "../components/BookCard";
 
 export default async function WishListPage() {

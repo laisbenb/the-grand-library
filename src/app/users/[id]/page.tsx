@@ -4,7 +4,7 @@ import prisma from "@/lib/client";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import BookCard from "../../components/BookCard";
-import { returnBook } from "../action";
+import { returnBook } from "@/app/actions/ReturnBook";
 import CountdownTimer from "@/app/components/DueDateTimer";
 import { extendLoan } from "@/app/actions/extendLoan";
 
@@ -141,7 +141,6 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           </div>
         )}
       </div>
-      {/* Borrowed Books Section */}
       {/* Borrowed Books Section */}
 <div className="bg-white shadow-md p-6 rounded-2xl border border-gray-100">
   <div className="flex items-center justify-between mb-6">

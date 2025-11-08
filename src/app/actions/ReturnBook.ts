@@ -11,7 +11,6 @@ export async function returnBook(loanId: number) {
 
   const userId = Number(session.user.id);
 
-  // Verify the loan belongs to this user
   const loan = await prisma.loan.findUnique({ where: { id: loanId } });
   if (!loan || loan.userId !== userId) {
     throw new Error("Unauthorized or invalid loan");
