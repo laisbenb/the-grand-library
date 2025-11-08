@@ -14,6 +14,20 @@ interface UserDetailPageProps {
   };
 }
 
+export async function generateMetadata({ params }: UserDetailPageProps) {
+  const userId = Number(params.id);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) return { title: "User Not Found | The Grand Library" };
+
+  return {
+    title: user.name,
+    description: `Details about user ${user.name}`,
+  };
+}
+
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
   const session = await getServerSession(authOptions);
 

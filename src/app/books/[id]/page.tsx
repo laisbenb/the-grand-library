@@ -13,6 +13,33 @@ interface DetailPageProps {
   };
 }
 
+export async function generateMetadata({ params }: DetailPageProps) {
+  const bookId = Number(params.id);
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    include: { Author_Books: { include: { author: true } } },
+  });
+
+  if (!book) {
+    return {
+      title: "Book Not Found",
+      description: "This book could not be found in our library.",
+    };
+  }
+
+  const authors = book.Author_Books.map((ab) => ab.author.name).join(", ") || "Unknown Author";
+
+  return {
+    title: `${book.title}`,
+    description: `Read more about "${book.title}" by ${authors}. Available in our Library App.`,
+    openGraph: {
+      title: book.title,
+      description: `Book by ${authors}`,
+      images: book.coverImage ? [`${process.env.NEXT_PUBLIC_BASE_URL}${book.coverImage}`] : [],
+    },
+  };
+}
+
 export default async function BookDetailPage({ params }: DetailPageProps) {
   const session = await getServerSession(authOptions);
   const bookId = Number(params.id);

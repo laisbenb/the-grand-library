@@ -4,6 +4,13 @@ import prisma from "@/lib/client";
 import { redirect } from "next/navigation";
 import { approveBorrow, rejectBorrow } from "@/app/actions/Borrow";
 
+export async function generateMetadata() {
+  return {
+    title: "Admin Borrow Requests | The Grand Library",
+    description: "Manage borrow requests from users",
+  };
+}
+
 export default async function AdminBorrowRequestsPage() {
   const session = await getServerSession(authOptions);
 
