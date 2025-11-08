@@ -40,6 +40,14 @@ export default function NavBar() {
             Users
           </Link>
         )}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="text-gray-700 hover:text-orange-600 font-medium transition"
+          >
+            Admin
+          </Link>
+        )}
       </div>
 
       <div className="relative">

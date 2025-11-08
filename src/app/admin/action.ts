@@ -11,11 +11,16 @@ export async function approveBorrow(requestId: number) {
     throw new Error("Unauthorized");
   }
 
+  const now = new Date();
+  const dueDate = new Date(now.getTime() + 1 * 60 * 1000);
+
+
   await prisma.loan.update({
     where: { id: requestId },
     data: {
       status: "APPROVED",
       approvedAt: new Date(),
+      dueDate,
     },
   });
 

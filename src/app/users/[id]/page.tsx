@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import BookCard from "../../components/BookCard";
 import { returnBook } from "../action";
+import CountdownTimer from "@/app/components/DueDateTimer";
 
 interface UserDetailPageProps {
   params: {
@@ -191,6 +192,11 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                     </button>
                   </form>
                 )}
+                {loan.status === "APPROVED" && loan.dueDate && (
+                  <CountdownTimer dueDate={loan.dueDate} />
+                )}
+
+
 
                       
                 {/* Reuse your BookCard component */}
