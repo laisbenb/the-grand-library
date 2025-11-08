@@ -6,6 +6,7 @@ import Link from "next/link";
 import BookCard from "../../components/BookCard";
 import { returnBook } from "../action";
 import CountdownTimer from "@/app/components/DueDateTimer";
+import { extendLoan } from "@/app/actions/extendLoan";
 
 interface UserDetailPageProps {
   params: {
@@ -141,80 +142,113 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         )}
       </div>
       {/* Borrowed Books Section */}
-      <div className="bg-white shadow-md p-6 rounded-2xl border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800">Borrowed Books</h2>
-          <span className="bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-full">
-            {borrowedBooks.length}{" "}
-            {borrowedBooks.length === 1 ? "Request" : "Requests"}
-          </span>
-        </div>
+      {/* Borrowed Books Section */}
+<div className="bg-white shadow-md p-6 rounded-2xl border border-gray-100">
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-semibold text-gray-800">📚 Borrowed Books</h2>
+    <span className="bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-full">
+      {borrowedBooks.length}{" "}
+      {borrowedBooks.length === 1 ? "Book" : "Books"}
+    </span>
+  </div>
 
-        {borrowedBooks.length === 0 ? (
-          <p className="text-gray-500 italic">
-            This user hasn’t requested or borrowed any books yet.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {borrowedBooks.map((loan) => (
-              <div
-                key={loan.id}
-                className="p-4 rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center"
+  {borrowedBooks.length === 0 ? (
+    <p className="text-gray-500 italic">
+      This user hasn’t borrowed or requested any books yet.
+    </p>
+  ) : (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {borrowedBooks.map((loan) => (
+        <div
+          key={loan.id}
+          className="flex flex-col sm:flex-row gap-4 bg-gray-50 rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all duration-200"
+        >
+          {/* Book Cover */}
+          <div className="w-full sm:w-40 flex-shrink-0">
+            <BookCard
+              id={loan.book.id}
+              title={loan.book.title}
+              coverImage={loan.book.coverImage}
+              authors={loan.book.Author_Books.map((ab) => ab.author.name)}
+              genres={loan.book.Book_Genres.map((bg) => bg.genre.name)}
+              publishedYear={loan.book.publishedYear}
+              createdAt={loan.book.createdAt}
+            />
+          </div>
+
+          {/* Details + Actions */}
+          <div className="flex flex-col justify-between flex-1">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                {loan.book.title}
+              </h3>
+              <p className="text-sm text-gray-600 mb-1">
+                Requested on{" "}
+                <span className="font-medium">
+                  {new Date(loan.requestedAt).toLocaleDateString()}
+                </span>
+              </p>
+              <p
+                className={`text-sm font-semibold ${
+                  loan.status === "PENDING"
+                    ? "text-orange-500"
+                    : loan.status === "APPROVED"
+                    ? "text-green-600"
+                    : loan.status === "REJECTED"
+                    ? "text-red-500"
+                    : "text-gray-400"
+                }`}
               >
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800">
-                    {loan.book.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Requested on {new Date(loan.requestedAt).toLocaleDateString()}
-                  </p>
-                  <p
-                    className={`font-semibold mt-1 ${
-                      loan.status === "PENDING"
-                        ? "text-orange-500"
-                              : loan.status === "APPROVED"
-                              ? "text-green-600"
-                              : loan.status === "REJECTED"
-                              ? "text-red-500"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          Status: {loan.status}
-                  </p>
+                Status: {loan.status}
+              </p>
+            </div>
+
+            {/* Countdown + Actions */}
+            <div className="mt-4 space-y-3">
+              {loan.status === "APPROVED" && loan.dueDate && (
+                <div className="bg-gray-100 text-gray-800 text-sm px-3 py-2 rounded-md flex items-center justify-between">
+                  <span>⏳ Due in:</span>
+                  <CountdownTimer dueDate={loan.dueDate} />
                 </div>
-                {isSelf && loan.status === "APPROVED" && (
-                  <form action={returnBook.bind(null, loan.id)} className="mt-2">
+              )}
+
+              {/* Action Buttons */}
+              {isSelf && loan.status === "APPROVED" && (
+                <div className="flex flex-wrap gap-2">
+                  <form action={returnBook.bind(null, loan.id)}>
                     <button
                       type="submit"
-                      className="px-3 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition"
+                      className="px-4 py-2 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition"
                     >
                       🔄 Mark as Returned
                     </button>
                   </form>
-                )}
-                {loan.status === "APPROVED" && loan.dueDate && (
-                  <CountdownTimer dueDate={loan.dueDate} />
-                )}
 
+                  {!loan.extended && (
+                    <form action={extendLoan.bind(null, loan.id)}>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 transition"
+                      >
+                        🔁 Extend Borrow (7 Days)
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
 
-
-                      
-                {/* Reuse your BookCard component */}
-                <BookCard
-                  id={loan.book.id}
-                  title={loan.book.title}
-                  coverImage={loan.book.coverImage}
-                  authors={loan.book.Author_Books.map((ab) => ab.author.name)}
-                  genres={loan.book.Book_Genres.map((bg) => bg.genre.name)}
-                  publishedYear={loan.book.publishedYear}
-                  createdAt={loan.book.createdAt}
-                />
-              </div>
-            ))}
+              {loan.extended && (
+                <p className="text-xs text-gray-500 italic">
+                  ✅ Borrow extended once.
+                </p>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-
+        </div>
+      ))}
+    </div>
+  )}
+</div>
     </div>
   );
 }

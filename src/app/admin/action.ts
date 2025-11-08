@@ -12,7 +12,7 @@ export async function approveBorrow(requestId: number) {
   }
 
   const now = new Date();
-  const dueDate = new Date(now.getTime() + 1 * 60 * 1000);
+  const dueDate = new Date(now.getTime() + 1 * 60 * 1000); //7 * 24 * 60 * 60 * 1000
 
 
   await prisma.loan.update({
