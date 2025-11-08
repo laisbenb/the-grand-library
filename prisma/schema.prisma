@@ -97,6 +97,7 @@ model Loan {
   status      LoanStatus @default(PENDING)
   requestedAt DateTime   @default(now())
   approvedAt  DateTime?
+  dueDate     DateTime?
   returnedAt  DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
