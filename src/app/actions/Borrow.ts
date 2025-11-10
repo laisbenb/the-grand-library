@@ -7,10 +7,13 @@ import { revalidatePath } from "next/cache";
 
 export async function requestBorrow(bookId: number) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Not authenticated");
+  if (!session?.user) {
+    return { error: "unauthorized" };
+  }
 
   const userId = Number(session.user.id);
 
+  // Check if the book is already borrowed
   const existingBorrow = await prisma.loan.findFirst({
     where: {
       bookId,
@@ -18,8 +21,11 @@ export async function requestBorrow(bookId: number) {
     },
   });
 
-  if (existingBorrow) throw new Error("Book is already borrowed.");
-  
+  if (existingBorrow) {
+    return { error: "already-borrowed" };
+  }
+
+  // Check if the same user already has a pending request
   const existingRequest = await prisma.loan.findFirst({
     where: {
       bookId,
@@ -28,42 +34,49 @@ export async function requestBorrow(bookId: number) {
     },
   });
 
-  if (existingRequest) throw new Error("You already requested this book.");
+  if (existingRequest) {
+    return { error: "already-requested" };
+  }
 
+  // Create a new pending borrow request
   await prisma.loan.create({
     data: {
       userId,
       bookId,
     },
   });
+
+  revalidatePath(`/books/${bookId}`);
+
+  return { success: true };
 }
 
 export async function approveBorrow(requestId: number) {
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized");
+    return { error: "unauthorized" };
   }
 
   const now = new Date();
-  const dueDate = new Date(now.getTime() + 1 * 60 * 1000); //7 * 24 * 60 * 60 * 1000
-
+  const dueDate = new Date(now.getTime() + 1 * 60 * 1000); // ⏱️ currently 1 minute for testing
 
   await prisma.loan.update({
     where: { id: requestId },
     data: {
       status: "APPROVED",
-      approvedAt: new Date(),
+      approvedAt: now,
       dueDate,
     },
   });
 
   revalidatePath("/admin");
+  return { success: true };
 }
 
 export async function rejectBorrow(requestId: number) {
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized");
+    return { error: "unauthorized" };
   }
 
   await prisma.loan.update({
@@ -74,4 +87,5 @@ export async function rejectBorrow(requestId: number) {
   });
 
   revalidatePath("/admin");
+  return { success: true };
 }
