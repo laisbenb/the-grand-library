@@ -13,7 +13,6 @@ export async function requestBorrow(bookId: number) {
 
   const userId = Number(session.user.id);
 
-  // Check if the book is already borrowed
   const existingBorrow = await prisma.loan.findFirst({
     where: {
       bookId,
@@ -25,7 +24,6 @@ export async function requestBorrow(bookId: number) {
     return { error: "already-borrowed" };
   }
 
-  // Check if the same user already has a pending request
   const existingRequest = await prisma.loan.findFirst({
     where: {
       bookId,
@@ -38,7 +36,6 @@ export async function requestBorrow(bookId: number) {
     return { error: "already-requested" };
   }
 
-  // Create a new pending borrow request
   await prisma.loan.create({
     data: {
       userId,
@@ -58,7 +55,7 @@ export async function approveBorrow(requestId: number) {
   }
 
   const now = new Date();
-  const dueDate = new Date(now.getTime() + 1 * 60 * 1000); // ⏱️ currently 1 minute for testing
+  const dueDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   await prisma.loan.update({
     where: { id: requestId },
